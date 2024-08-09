@@ -8,6 +8,27 @@ import { Clone, Float, PerspectiveCamera } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useLerpedMouse } from "./hooks";
 
+const Constants = {
+  mobile: {
+    zStart: 2000,
+    zEnd: -300,
+    xMin: -600,
+    xMax: -200,
+    targetX: -50,
+    yBase: 50,
+    yRange: 100,
+  },
+  desktop: {
+    zStart: 1100,
+    zEnd: -40,
+    xMin: -800,
+    xMax: 0,
+    targetX: -300,
+    yBase: 200,
+    yRange: 200,
+  },
+};
+
 const cameraTargetPosition = new THREE.Vector3(0, -10, 211);
 export default function Scene({ scroll, ...props }) {
   const { nodes, materials } = useSpline(
@@ -22,28 +43,42 @@ export default function Scene({ scroll, ...props }) {
   const lerpedScroll = useRef(0);
 
   useFrame(() => {
-    // lerp the scroll
+    // ✅ 스크롤 보간
     lerpedScroll.current += (scroll.current - lerpedScroll.current) * 0.08;
 
-    // animate the camera
-    const zStart = isMobile ? 2000 : 1100;
-    const zEnd = isMobile ? -300 : -40;
-    const xMin = isMobile ? -600 : -800;
-    const xMax = isMobile ? -200 : 0;
-    const targetX = isMobile ? -50 : -300;
-    const yBase = isMobile ? 50 : 200;
-    const yRange = isMobile ? 100 : 200;
+    const viewport = isMobile ? "mobile" : "desktop";
+
+    // ✅ 카메라
+    const { zStart, zEnd, xMin, xMax, targetX, yBase, yRange } =
+      Constants[viewport];
+
     const t = lerpedScroll.current;
     const arc = Math.sin(t * Math.PI);
-    camera.current.position.set(
-      THREE.MathUtils.lerp(xMax, xMin, arc),
-      arc * yRange + yBase,
-      THREE.MathUtils.lerp(zStart, zEnd, t)
-    );
-    cameraTargetPosition.x = THREE.MathUtils.lerp(0, targetX, arc);
-    camera.current.lookAt(cameraTargetPosition);
 
-    // rotate the model on mousehover
+    const cameraPosition = {
+      x: THREE.MathUtils.lerp(xMin * 2, xMax * 2, t),
+      y: 200,
+      // z: THREE.MathUtils.lerp(zStart, zEnd, t),
+      z: 400,
+    };
+
+    if (camera.current) {
+      console.log(cameraPosition);
+
+      camera.current.position.set(
+        cameraPosition.x,
+        cameraPosition.y,
+        cameraPosition.z
+      );
+      // cameraTargetPosition.x = THREE.MathUtils.lerp(0, targetX, arc);
+
+      console.log("target x", targetX);
+
+      cameraTargetPosition.x = targetX;
+      camera.current.lookAt(cameraTargetPosition);
+    }
+
+    // ✅ 마우스 움직임에 따라 씬의 모델들 회전
     sceneContent.current.position.x = (1 - t) * 150;
     sceneContent.current.rotation.y = mouse.current.x * Math.PI * 0.03;
   });

@@ -5,6 +5,7 @@ import { Overlay } from "./Overlay";
 
 export default function App() {
   const scroll = useRef(0);
+
   return (
     <>
       <Canvas shadows flat linear>
